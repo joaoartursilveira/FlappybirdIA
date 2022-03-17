@@ -3,17 +3,17 @@ import pygame
 import neat
 import os
 
-WIN_WITDH = 500
+WIN_WITDH = 800
 WIN_HEIGHT = 800
-DRAW_LINES = True
+DRAW_LINES = False
 
 pygame.font.init()
 pygame.display.set_caption('Flappy Bird')
 
 WIN = pygame.display.set_mode((WIN_WITDH, WIN_HEIGHT))
 SCORE_FONT = pygame.font.SysFont('arial', 30)
-BG_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join('imgs', 'bg.png')))
-
+BG_IMG = pygame.transform.scale(pygame.image.load(os.path.join('imgs', 'bg.png')), (800, 800))
+WHITE = (255, 255, 255)
 
 def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -42,28 +42,31 @@ def draw_window(window, birds, base, pipes, score, pipe_ind):
     for pipe in pipes:
         pipe.draw(win=window)
 
-    text_score = SCORE_FONT.render(f'Score: {score}', 1, (255,255,255))
-    window.blit(text_score, (text_score.get_width()-60, 7))
+    score_text = SCORE_FONT.render(f'Score: {score}', 1, WHITE)
+    window.blit(score_text, (score_text.get_width()-60, 7))
     base.draw(win=window)
 
     for bird in birds:
         if DRAW_LINES:
             draw_lines(window, bird, pipes, pipe_ind)
         bird.draw(win=window)
-
-    window.blit(SCORE_FONT.render(f'Species: {len(birds)}', 1, (255,255,255)), (30, 35))
+    species_text = SCORE_FONT.render(f'Species: {len(birds)}', 1, WHITE)
+    window.blit(species_text, (30, 35))
     pygame.display.update()
 
 
 def main(genomes, config):
     clock = pygame.time.Clock()
+    pipe_frequency = 1500
+    last_pipe = pygame.time.get_ticks() - pipe_frequency
     nets = []
     birds = []
     ge = []
+
     for _, g in genomes:
         net = neat.nn.FeedForwardNetwork.create(g, config)
         nets.append(net)
-        birds.append(Bird(230, 350))
+        birds.append(Bird(150, 350))
         g.fitness = 0
         ge.append(g)
 
@@ -71,7 +74,6 @@ def main(genomes, config):
     pipes = [Pipe(600)]
     score = 0
     run = True
-
     while run:
         clock.tick(30)
         for event in pygame.event.get():
@@ -98,7 +100,6 @@ def main(genomes, config):
                 bird.jump()
 
         base.move()
-        add_pipe = False
         rem = []
         for pipe in pipes:
             for index_bird, bird in enumerate(birds):
@@ -109,16 +110,17 @@ def main(genomes, config):
 
                 if not pipe.passed and pipe.x < bird.x:
                     pipe.passed = True
-                    add_pipe = True
+                    score += 1
+                    for g in ge:
+                        g.fitness += 5
             
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 rem.append(pipe)
             pipe.move()
 
-        if add_pipe:
-            score += 1
-            for g in ge:
-                g.fitness += 5
+        time_now = pygame.time.get_ticks()
+        if time_now - last_pipe > pipe_frequency:
+            last_pipe = time_now
             pipes.append(Pipe(WIN_WITDH))
 
         for r in rem:
