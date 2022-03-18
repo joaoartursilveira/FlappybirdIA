@@ -126,5 +126,17 @@ class Base():
     def draw(self, win):
         win.blit(self.IMG, (self.x1, self.y))
         win.blit(self.IMG, (self.x2, self.y))
+    
+    def collide(self, bird):
+        bird_mask = bird.get_mask() 
+        base_mask = pygame.mask.from_surface(self.IMG)
+
+        base_offset = (self.x2 - bird.x, self.y-round(bird.y))
+
+        b_point = bird_mask.overlap(base_mask, base_offset)
+
+        if b_point:
+            return True
+        return False
 
 

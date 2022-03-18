@@ -16,7 +16,6 @@ WIN = pygame.display.set_mode((WIN_WITDH, WIN_HEIGHT))
 SCORE_FONT = pygame.font.SysFont('arial', 30)
 BG_IMG = pygame.transform.scale(pygame.image.load(os.path.join('imgs', 'bg.png')), (800, 800))
 WHITE = (255, 255, 255)
-gen = 0
 
 def draw_lines(window, bird, pipes, pipe_ind):
     try:
@@ -47,19 +46,19 @@ def draw_window(window, birds, base, pipes, score, pipe_ind):
     pygame.display.update()
 
 
-def main(genomes, config, gen=0):
-    gen += 1
+def main(genomes, config):
     nets = []
     birds = []
     ge = []
     base = Base(730)
     pipes = [Pipe(600)]
     score = 0
+    count = score
 
     for _, g in genomes:
         net = neat.nn.FeedForwardNetwork.create(g, config)
         nets.append(net)
-        birds.append(Bird(150, 350))
+        birds.append(Bird(150, 300))
         g.fitness = 0
         ge.append(g)
 
@@ -75,7 +74,7 @@ def main(genomes, config, gen=0):
                 run = False
                 pygame.quit()
                 quit()
-        
+    
         pipe_ind = 0
         if len(birds) > 0:
             if len(pipes) > 1 and birds[0].x > pipes[0].x + pipes[0].PIPE_TOP.get_width():
@@ -102,8 +101,9 @@ def main(genomes, config, gen=0):
                 if not pipe.passed and pipe.x < bird.x:
                     pipe.passed = True
                     score += 1
+                    count += 1
                     for g in ge:
-                        g.fitness += 1
+                        g.fitness += 5
             
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 rem.append(pipe)
@@ -119,14 +119,16 @@ def main(genomes, config, gen=0):
 
         for index_bird, bird in enumerate(birds):
             if bird.y + bird.img.get_height() >= 730 or bird.y < 0:
+                ge[index_bird].fitness -= 1
                 for list in [birds, nets, ge]:
                     list.pop(index_bird)
 
         draw_window(WIN, birds, base, pipes, score, pipe_ind)
-
-        if score > 50:
-            pickle.dump(nets[0], open('best_bird.picke', 'wb'))
-            break
+        
+        if count > 80:
+            count = 0
+            pickle.dump(nets[0], open('best_bird.pickle', 'wb'))
+            print('neural network saved')
 
 def run(config_path):
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
@@ -136,7 +138,7 @@ def run(config_path):
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    winner = p.run(main, 100)
+    winner = p.run(main, 50)
     print(f'Best genome: {winner}')
 
 if __name__ == '__main__':
