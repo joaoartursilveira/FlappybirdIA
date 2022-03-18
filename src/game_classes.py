@@ -1,11 +1,13 @@
 import os
 import random
 import pygame
+import math
 
 PIPE_IMG = pygame.transform.scale(pygame.image.load(os.path.join('imgs','pipe.png')), (52, 500))
 BASE_IMG = pygame.transform.scale(pygame.image.load(os.path.join('imgs','base.png')), (800, 112))
 BIRD_IMGS = [pygame.transform.scale(pygame.image.load(os.path.join('imgs', bird)), (40, 35)) for bird in ['bird1.png', 'bird2.png', 'bird3.png']]
 VEL_GAME = 5
+
 
 class Bird():
     IMGS = BIRD_IMGS
@@ -18,30 +20,23 @@ class Bird():
         self.y = y
         self.height = self.y
         self.vel = 0
-        self.tilt = 0
-        self.tick_count = 0
         self.img_count = 0
         self.img_index = 0
         self.img = self.IMGS[0]
-    
+        self.rect = self.img.get_rect()
+
     def jump(self):
         self.vel = -10
-        self.tick_count = 0
         self.height = self.y
 
     def move(self):
-        self.tick_count += 1
         self.vel += 1
         d = self.vel
-
         if d >= 16:
             d = 16
         elif d < 0:
             d -= 2
-
         self.y = self.y + d
-
-        self.aux_d = d
 
     def draw(self, win):
         self.img_count += 1
@@ -51,12 +46,7 @@ class Bird():
                 if self.img_index >= len(self.IMGS):
                     self.img_index = 0
         self.img = self.IMGS[self.img_index]
-
-
-        if self.aux_d < 0:
-            blitRotateCenter(win, self.img, (self.x, self.y), self.tilt)
-        else:
-            blitRotateCenter(win, self.img, (self.x, self.y), -self.tilt)
+        blitRotateCenter(win, self.img, (self.x, self.y), -self.vel*2)
 
     def get_mask(self):
         return pygame.mask.from_surface(self.img)
@@ -67,7 +57,7 @@ def blitRotateCenter(surf, image, topleft, angle):
     surf.blit(rotated_image, new_rect.topleft)
 
 class Pipe():
-    GAP = 200
+    GAP = 170
 
     def __init__(self, x) -> None:
         self.VEL = VEL_GAME
@@ -79,15 +69,20 @@ class Pipe():
         self.PIPE_BOTTOM = PIPE_IMG
         self.passed = False
         self.set_height()
+        self.T = random.randrange(1, 2)
+        self.A = random.randrange(0, 6)
 
     def set_height(self):
-        self.height = random.randrange(50, 450)
+        self.height = random.randrange(150, 400)
         self.top = self.height - self.PIPE_TOP.get_height()
         self.bottom = self.height + self.GAP
 
-    def move(self):
+    def move(self, time):
         self.x -= self.VEL
-
+        angular = self.A*math.sin(2*3.14*time/self.T)
+        self.top -= angular
+        self.bottom -= angular
+        
     def draw(self, win):
         win.blit(self.PIPE_TOP, (self.x, self.top))
         win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))

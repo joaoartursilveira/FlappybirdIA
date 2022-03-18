@@ -1,7 +1,9 @@
 from src.game_classes import Bird, Base, Pipe
+import random
 import pygame
 import neat
 import os
+import pickle
 
 WIN_WITDH = 800
 WIN_HEIGHT = 800
@@ -14,16 +16,7 @@ WIN = pygame.display.set_mode((WIN_WITDH, WIN_HEIGHT))
 SCORE_FONT = pygame.font.SysFont('arial', 30)
 BG_IMG = pygame.transform.scale(pygame.image.load(os.path.join('imgs', 'bg.png')), (800, 800))
 WHITE = (255, 255, 255)
-
-def run(config_path):
-    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
-                         neat.DefaultSpeciesSet, neat.DefaultStagnation,
-                         config_path)
-    p = neat.Population(config)
-    p.add_reporter(neat.StdOutReporter(True))
-    stats = neat.StatisticsReporter()
-    p.add_reporter(stats)
-    winner = p.run(main, 50)
+gen = 0
 
 def draw_lines(window, bird, pipes, pipe_ind):
     try:
@@ -36,7 +29,6 @@ def draw_lines(window, bird, pipes, pipe_ind):
         pass
 
 def draw_window(window, birds, base, pipes, score, pipe_ind):
-    count = score
     window.blit(BG_IMG, (0,0))
 
     for pipe in pipes:
@@ -55,13 +47,14 @@ def draw_window(window, birds, base, pipes, score, pipe_ind):
     pygame.display.update()
 
 
-def main(genomes, config):
-    clock = pygame.time.Clock()
-    pipe_frequency = 1500
-    last_pipe = pygame.time.get_ticks() - pipe_frequency
+def main(genomes, config, gen=0):
+    gen += 1
     nets = []
     birds = []
     ge = []
+    base = Base(730)
+    pipes = [Pipe(600)]
+    score = 0
 
     for _, g in genomes:
         net = neat.nn.FeedForwardNetwork.create(g, config)
@@ -70,12 +63,13 @@ def main(genomes, config):
         g.fitness = 0
         ge.append(g)
 
-    base = Base(730)
-    pipes = [Pipe(600)]
-    score = 0
+    clock = pygame.time.Clock()
+    pipe_frequency = 1500
+    last_pipe = pygame.time.get_ticks() - pipe_frequency
     run = True
-    while run:
+    while run and len(birds)>0:
         clock.tick(30)
+        base.move()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
@@ -86,9 +80,7 @@ def main(genomes, config):
         if len(birds) > 0:
             if len(pipes) > 1 and birds[0].x > pipes[0].x + pipes[0].PIPE_TOP.get_width():
                 pipe_ind = 1
-        else:
-            run = False
-            break
+
 
         for index_bird, bird in enumerate(birds):
             bird.move()
@@ -99,7 +91,6 @@ def main(genomes, config):
             if output[0] > 0.5:
                 bird.jump()
 
-        base.move()
         rem = []
         for pipe in pipes:
             for index_bird, bird in enumerate(birds):
@@ -112,11 +103,11 @@ def main(genomes, config):
                     pipe.passed = True
                     score += 1
                     for g in ge:
-                        g.fitness += 5
+                        g.fitness += 1
             
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 rem.append(pipe)
-            pipe.move()
+            pipe.move(pygame.time.get_ticks())
 
         time_now = pygame.time.get_ticks()
         if time_now - last_pipe > pipe_frequency:
@@ -133,6 +124,20 @@ def main(genomes, config):
 
         draw_window(WIN, birds, base, pipes, score, pipe_ind)
 
+        if score > 50:
+            pickle.dump(nets[0], open('best_bird.picke', 'wb'))
+            break
+
+def run(config_path):
+    config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                        neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                        config_path)
+    p = neat.Population(config)
+    p.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    p.add_reporter(stats)
+    winner = p.run(main, 100)
+    print(f'Best genome: {winner}')
 
 if __name__ == '__main__':
     run(r'./src/config-feedforward.txt')
