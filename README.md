@@ -1,5 +1,5 @@
 # Python setup
-Hello there! This is a quick setup tutorial for beginers. If you already know how to get started, feel free to skip this part [here](#FlappyBird). <br/>
+Hello there! This is a quick setup tutorial for beginers. If you already know how to get started, feel free to skip this part [here](#Flappy-Bird). <br/>
 First of all, we need to install python, which is a easy process, to do so I recomend this [Video](https://www.youtube.com/watch?v=i-MuSAwgwCU).
 
 ## Module download
