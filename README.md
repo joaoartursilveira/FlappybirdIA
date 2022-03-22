@@ -19,6 +19,7 @@ Surprisingly enough, that's it, we are ready to start the fun part, which is int
 # Flappy Bird
 The game was created using pygame libary, which takes images as input and emulates them. <br/>
 I splitted the module in two files: train_birds.py, which, the name suggests, is the traning part, and test_bird.py, which is the test part. <br/>
+I spiced the game up for the AI to play, as the pipes move vertically in random amplitudes and frequencies.
 There's already a trained AI to play the game for you, but feel free to do as you wish.
 
 ## Training part
