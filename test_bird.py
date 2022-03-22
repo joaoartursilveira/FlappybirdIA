@@ -87,7 +87,7 @@ def main(model):
             run = False
             pass
 
-        draw_window(WIN, bird, base, pipes, score, pipe_ind)
+        draw_window(WIN, bird, base, pipes, score)
         
 
 if __name__ == '__main__':
