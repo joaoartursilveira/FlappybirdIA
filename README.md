@@ -25,7 +25,7 @@ There's already a trained AI to play the game for you, but feel free to do as yo
 ## Training part
 Here the NEAT python module generate a series of neural network to play the game. Every time all birds die without reaching the fitness threshold,
 the game will reset and the best performing birds will pass on that network and NEAT will improve it. This process is repeated until we get our fitness threshold
-or a bird reach a score of 80, then, with the useful pickle libary, the winning AI will be pickled and saved to be used in the test part.
+or a bird reach a score of 80, then, with the useful pickle library, the winning AI will be pickled and saved to be used in the test part.
 
 ## Test part
 Loads the AI saved on the pickle file and play the game until you are tired of watching it. It's fun watching the bird jump, though.
